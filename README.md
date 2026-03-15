@@ -31,6 +31,11 @@ cp server/.env.example server/.env
 # Edit server/.env with your MongoDB URI and other keys
 ```
 
+Create client env for a fixed API base URL:
+```bash
+echo VITE_API_URL=http://localhost:8080/api > client/.env
+```
+
 ### 3. Seed Database (admin + sample packages)
 ```bash
 npm run seed
@@ -43,7 +48,7 @@ npm run dev
 
 Access:
 - **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5000/api
+- **Backend API**: http://localhost:8080/api
 
 ## Default Admin Login
 - **Email**: admin@ghumfir.com

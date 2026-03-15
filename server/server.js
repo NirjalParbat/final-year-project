@@ -49,6 +49,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
 
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Ghumfir backend is running',
+    health: '/api/health',
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Ghumfir API is running' });

@@ -34,7 +34,11 @@ services:
       - key: KHALTI_SECRET_KEY
         sync: false
       - key: CLIENT_URL
-        value: https://ghumfir-client.onrender.com
+        value: https://www.ghumfir.me
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        value: noreply@ghumfir.me
 
   # ── Frontend Static Site ─────────────────────────────────────────────────────
   - type: web
@@ -49,4 +53,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://ghumfir-backend.onrender.com/api
+        value: https://api.ghumfir.me/api

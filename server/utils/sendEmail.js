@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 
-const createTransporter = () => {
-  const port = Number(process.env.EMAIL_PORT) || 587;
+const createTransporter = (port) => {
   const normalizedPass = (process.env.EMAIL_PASS || '').replace(/\s+/g, '');
 
   return nodemailer.createTransport({
@@ -9,6 +8,9 @@ const createTransporter = () => {
     port,
     secure: port === 465,
     requireTLS: port !== 465,
+    connectionTimeout: 12000,
+    greetingTimeout: 12000,
+    socketTimeout: 15000,
     auth: {
       user: process.env.EMAIL_USER,
       pass: normalizedPass,
@@ -17,13 +19,28 @@ const createTransporter = () => {
 };
 
 export const sendEmail = async ({ to, subject, html }) => {
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"${process.env.EMAIL_FROM_NAME || 'Ghumfir Travel'}" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  const preferredPort = Number(process.env.EMAIL_PORT) || 587;
+  const fallbackPort = preferredPort === 587 ? 465 : 587;
+
+  const send = async (port) => {
+    const transporter = createTransporter(port);
+    await transporter.sendMail({
+      from: `"${process.env.EMAIL_FROM_NAME || 'Ghumfir Travel'}" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  };
+
+  try {
+    await send(preferredPort);
+  } catch (err) {
+    const msg = String(err?.message || '').toLowerCase();
+    const isTimeout = msg.includes('timeout') || err?.code === 'ETIMEDOUT';
+    if (!isTimeout) throw err;
+
+    await send(fallbackPort);
+  }
 };
 
 export const bookingConfirmationEmail = (user, booking, pkg) => {

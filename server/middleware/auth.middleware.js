@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.model.js';
 
-// Protect routes - verify JWT
+// Protect routes — verify JWT and enforce account status
 export const protect = async (req, res, next) => {
   try {
     let token;
@@ -27,11 +27,27 @@ export const protect = async (req, res, next) => {
       });
     }
 
+    // Defense-in-depth: reject even if a token was somehow issued before verification
+    if (!req.user.isEmailVerified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Email not verified.',
+        code: 'EMAIL_NOT_VERIFIED',
+      });
+    }
+
+    if (!req.user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account has been deactivated.',
+      });
+    }
+
     next();
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized. Token invalid.',
+      message: 'Not authorized. Token invalid or expired.',
     });
   }
 };

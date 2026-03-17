@@ -4,6 +4,10 @@ import API from './axios.js';
 export const authAPI = {
   register: (data) => API.post('/auth/register', data),
   login: (data) => API.post('/auth/login', data),
+  verifyEmail: (data) => API.post('/auth/verify-email', data),
+  resendVerification: (data) => API.post('/auth/resend-verification', data),
+  forgotPassword: (data) => API.post('/auth/forgot-password', data),
+  resetPassword: (data) => API.post('/auth/reset-password', data),
   getMe: () => API.get('/auth/me'),
   updateProfile: (data) => API.put('/auth/update-profile', data),
   changePassword: (data) => API.put('/auth/change-password', data),

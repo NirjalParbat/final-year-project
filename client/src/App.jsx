@@ -12,6 +12,10 @@ import PackagesPage from './pages/PackagesPage.jsx';
 import PackageDetailPage from './pages/PackageDetailPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import VerifyEmailPage from './pages/VerifyEmailPage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+import OAuthCallbackPage from './pages/OAuthCallbackPage.jsx';
 
 // Protected Pages
 import BookingPage from './pages/BookingPage.jsx';
@@ -38,6 +42,10 @@ export default function App() {
             <Route path="/packages/:id" element={<PackageDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
             {/* Protected User Routes */}
             <Route path="/book/:id" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />

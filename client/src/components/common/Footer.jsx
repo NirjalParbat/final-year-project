@@ -23,14 +23,14 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
-          {/* â”€â”€ Brand col â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="inline-flex mb-4 rounded-xl bg-white/95 px-3 py-2 ring-1 ring-white/60 shadow-lg backdrop-blur-sm">
               <img src={logoImg} alt="Ghumfir" className="h-12 w-auto object-contain" />
             </Link>
             <p className="text-sm text-primary-200 leading-relaxed mb-5 max-w-xs">
               Your trusted travel partner for curated tour packages across Nepal and beyond.
-              Adventure, culture, and nature â€” all in one place.
+              Adventure, culture, and nature all in one place.
             </p>
             <div className="flex gap-2.5">
               {[
@@ -50,7 +50,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* â”€â”€ Quick links â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <div>
             <h3 className="font-display text-xs font-semibold uppercase tracking-wider text-primary-300 mb-4">
               Quick Links
@@ -70,7 +69,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* â”€â”€ Support â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+         
           <div>
             <h3 className="font-display text-xs font-semibold uppercase tracking-wider text-primary-300 mb-4">
               Support
@@ -90,7 +89,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* â”€â”€ Contact â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          
           <div>
             <h3 className="font-display text-xs font-semibold uppercase tracking-wider text-primary-300 mb-4">
               Contact
@@ -119,7 +118,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* â”€â”€ Bottom bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+     
       <div className="border-t border-primary-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-primary-400">

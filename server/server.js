@@ -1,9 +1,15 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
+import session from 'express-session';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import './config/passport.js'; // registers Google strategy as side-effect
+import passport from 'passport';
 import authRoutes from './routes/auth.routes.js';
 import packageRoutes from './routes/package.routes.js';
 import bookingRoutes from './routes/booking.routes.js';
@@ -23,6 +29,27 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://localhost:5175',
 ].filter(Boolean);
+
+// Security headers (X-Content-Type-Options, X-Frame-Options, HSTS, etc.)
+app.use(helmet());
+
+// Prevent NoSQL injection via sanitisation of req.body / req.query / req.params
+app.use(mongoSanitize());
+
+// Session — used only for the transient OAuth handshake; not for API authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 10 * 60 * 1000, // 10 minutes — just enough for OAuth redirect round-trip
+  },
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Middleware
 app.use(cors({

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import logoImg from '../images/logo.png';
+import GoogleSignInButton from '../components/common/GoogleSignInButton.jsx';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -104,7 +105,18 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-brand-muted mt-6">
+          <p className="text-right text-sm mt-3">
+            <Link to="/forgot-password" className="text-primary-600 hover:underline">Forgot password?</Link>
+          </p>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200" /></div>
+            <div className="relative flex justify-center text-xs text-gray-400"><span className="bg-white px-3">or continue with</span></div>
+          </div>
+
+          <GoogleSignInButton />
+
+          <p className="text-center text-sm text-brand-muted mt-4">
             Don't have an account?{' '}
             <Link to="/register" className="text-primary-600 font-semibold hover:text-accent-500">Create one</Link>
           </p>

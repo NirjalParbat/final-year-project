@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { sanitizeText } from '../utils/sanitizeText.js';
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -31,6 +32,13 @@ const reviewSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+reviewSchema.pre('validate', function (next) {
+  if (typeof this.comment === 'string') {
+    this.comment = sanitizeText(this.comment, { maxLength: 1200 });
+  }
+  next();
+});
 
 // One review per booking
 reviewSchema.index({ booking: 1 }, { unique: true });

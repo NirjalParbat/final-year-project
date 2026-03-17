@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { sanitizeText } from '../utils/sanitizeText.js';
 
 const bookingSchema = new mongoose.Schema(
   {
@@ -55,5 +56,12 @@ const bookingSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+bookingSchema.pre('validate', function (next) {
+  if (typeof this.contactPhone === 'string') this.contactPhone = sanitizeText(this.contactPhone, { maxLength: 30 });
+  if (typeof this.specialRequests === 'string') this.specialRequests = sanitizeText(this.specialRequests, { maxLength: 1000 });
+  if (typeof this.khaltiTransactionId === 'string') this.khaltiTransactionId = sanitizeText(this.khaltiTransactionId, { maxLength: 120 });
+  next();
+});
 
 export default mongoose.model('Booking', bookingSchema);

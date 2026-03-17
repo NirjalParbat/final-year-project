@@ -4,15 +4,16 @@ import {
   getAllBookings, updateBookingStatus, getBookingStats,
 } from '../controllers/booking.controller.js';
 import { protect, adminOnly } from '../middleware/auth.middleware.js';
+import { createBookingValidation, mongoIdParam, bookingListValidation, bookingStatusValidation } from '../middleware/validation.middleware.js';
 
 const router = express.Router();
 
-router.post('/', protect, createBooking);
+router.post('/', protect, createBookingValidation, createBooking);
 router.get('/my', protect, getMyBookings);
-router.get('/admin/all', protect, adminOnly, getAllBookings);
+router.get('/admin/all', protect, adminOnly, bookingListValidation, getAllBookings);
 router.get('/admin/stats', protect, adminOnly, getBookingStats);
-router.get('/:id', protect, getBookingById);
-router.put('/:id/cancel', protect, cancelBooking);
-router.put('/:id/status', protect, adminOnly, updateBookingStatus);
+router.get('/:id', protect, mongoIdParam('id'), getBookingById);
+router.put('/:id/cancel', protect, mongoIdParam('id'), cancelBooking);
+router.put('/:id/status', protect, adminOnly, mongoIdParam('id'), bookingStatusValidation, updateBookingStatus);
 
 export default router;

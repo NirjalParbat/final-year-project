@@ -8,6 +8,8 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { logAuditEvent } from './utils/auditLogger.js';
+import { createRateLimiter } from './middleware/rateLimit.middleware.js';
 import './config/passport.js'; // registers Google strategy as side-effect
 import passport from 'passport';
 import authRoutes from './routes/auth.routes.js';
@@ -22,6 +24,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '.env') });
 
 const app = express();
+app.set('trust proxy', 1);
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -30,8 +33,46 @@ const allowedOrigins = [
   'http://localhost:5175',
 ].filter(Boolean);
 
+const apiLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  message: { success: false, message: 'Too many API requests. Please try again later.' },
+});
+
+const suspiciousByIp = new Map();
+
+const trackSuspiciousTraffic = (ip, statusCode) => {
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const threshold = 100;
+
+  const record = suspiciousByIp.get(ip) || { count: 0, start: now };
+  if (now - record.start > windowMs) {
+    record.count = 0;
+    record.start = now;
+  }
+
+  record.count += 1;
+  suspiciousByIp.set(ip, record);
+
+  if (record.count === threshold) {
+    logAuditEvent('security.high_request_volume', { ip, countPerMinute: record.count }, 'warn');
+  }
+
+  if ([401, 403, 429].includes(statusCode)) {
+    logAuditEvent('security.suspicious_response_pattern', { ip, statusCode }, 'warn');
+  }
+};
+
 // Security headers (X-Content-Type-Options, X-Frame-Options, HSTS, etc.)
 app.use(helmet());
+
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.status(400).json({ success: false, message: 'HTTPS is required.' });
+  }
+  next();
+});
 
 // Prevent NoSQL injection via sanitisation of req.body / req.query / req.params
 app.use(mongoSanitize());
@@ -65,8 +106,39 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+
+  res.on('finish', () => {
+    const duration = Date.now() - startedAt;
+    if (res.statusCode >= 500) {
+      logAuditEvent('api.request.error', {
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: res.statusCode,
+        durationMs: duration,
+        ip,
+      }, 'error');
+    } else if (res.statusCode >= 400) {
+      logAuditEvent('api.request.warning', {
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: res.statusCode,
+        durationMs: duration,
+        ip,
+      }, 'warn');
+    }
+    trackSuspiciousTraffic(ip, res.statusCode);
+  });
+
+  next();
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use('/api', apiLimiter);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/packages', packageRoutes);
@@ -92,9 +164,18 @@ app.get('/api/health', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
+
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ success: false, message: 'Payload too large' });
+  }
+
+  if (err?.name === 'MulterError') {
+    return res.status(400).json({ success: false, message: 'Invalid upload request' });
+  }
+
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Internal Server Error',
+    message: err.status && err.status < 500 ? err.message : 'Internal Server Error',
   });
 });
 

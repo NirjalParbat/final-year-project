@@ -61,7 +61,8 @@ export const createBooking = async (req, res) => {
       }
     })();
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('createBooking error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create booking.' });
   }
 };
 
@@ -74,7 +75,8 @@ export const getMyBookings = async (req, res) => {
       .sort('-createdAt');
     res.json({ success: true, bookings });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getMyBookings error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch bookings.' });
   }
 };
 
@@ -95,7 +97,8 @@ export const getBookingById = async (req, res) => {
 
     res.json({ success: true, booking });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getBookingById error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch booking.' });
   }
 };
 
@@ -124,7 +127,8 @@ export const cancelBooking = async (req, res) => {
 
     res.json({ success: true, message: 'Booking cancelled', booking });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('cancelBooking error:', error);
+    res.status(500).json({ success: false, message: 'Failed to cancel booking.' });
   }
 };
 
@@ -133,6 +137,8 @@ export const cancelBooking = async (req, res) => {
 export const getAllBookings = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
+    const pageNumber = Number(page);
+    const pageLimit = Number(limit);
     const query = status ? { bookingStatus: status } : {};
 
     const total = await Booking.countDocuments(query);
@@ -140,12 +146,13 @@ export const getAllBookings = async (req, res) => {
       .populate('user', 'name email')
       .populate('package', 'title destination price')
       .sort('-createdAt')
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+      .skip((pageNumber - 1) * pageLimit)
+      .limit(pageLimit);
 
     res.json({ success: true, total, bookings });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getAllBookings error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch bookings.' });
   }
 };
 
@@ -157,6 +164,9 @@ export const updateBookingStatus = async (req, res) => {
     const updates = {};
     if (bookingStatus !== undefined) updates.bookingStatus = bookingStatus;
     if (paymentStatus !== undefined) updates.paymentStatus = paymentStatus;
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ success: false, message: 'No valid fields provided for update' });
+    }
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
       updates,
@@ -166,7 +176,8 @@ export const updateBookingStatus = async (req, res) => {
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
     res.json({ success: true, message: 'Booking status updated', booking });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('updateBookingStatus error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update booking status.' });
   }
 };
 
@@ -191,6 +202,7 @@ export const getBookingStats = async (req, res) => {
       stats: { totalBookings, confirmedBookings, pendingBookings, cancelledBookings, totalRevenue },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getBookingStats error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch booking stats.' });
   }
 };

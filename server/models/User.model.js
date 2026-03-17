@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { sanitizeText } from '../utils/sanitizeText.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -61,6 +62,14 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre('validate', function (next) {
+  if (typeof this.name === 'string') this.name = sanitizeText(this.name, { maxLength: 80 });
+  if (typeof this.phone === 'string') this.phone = sanitizeText(this.phone, { maxLength: 30 });
+  if (typeof this.avatar === 'string') this.avatar = sanitizeText(this.avatar, { maxLength: 500 });
+  if (typeof this.email === 'string') this.email = sanitizeText(this.email, { maxLength: 255 }).toLowerCase();
+  next();
+});
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { sanitizeText, sanitizeStringArray } from '../utils/sanitizeText.js';
 
 const itinerarySchema = new mongoose.Schema({
   day: { type: Number, required: true },
@@ -6,6 +7,14 @@ const itinerarySchema = new mongoose.Schema({
   description: { type: String, required: true },
   accommodation: { type: String, default: '' },
   meals: { type: String, default: '' },
+});
+
+itinerarySchema.pre('validate', function (next) {
+  if (typeof this.title === 'string') this.title = sanitizeText(this.title, { maxLength: 120 });
+  if (typeof this.description === 'string') this.description = sanitizeText(this.description, { maxLength: 1200 });
+  if (typeof this.accommodation === 'string') this.accommodation = sanitizeText(this.accommodation, { maxLength: 200 });
+  if (typeof this.meals === 'string') this.meals = sanitizeText(this.meals, { maxLength: 200 });
+  next();
 });
 
 const packageSchema = new mongoose.Schema(
@@ -93,6 +102,20 @@ const packageSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+packageSchema.pre('validate', function (next) {
+  if (typeof this.title === 'string') this.title = sanitizeText(this.title, { maxLength: 120 });
+  if (typeof this.destination === 'string') this.destination = sanitizeText(this.destination, { maxLength: 120 });
+  if (typeof this.country === 'string') this.country = sanitizeText(this.country, { maxLength: 80 });
+  if (typeof this.description === 'string') this.description = sanitizeText(this.description, { maxLength: 4000 });
+  if (typeof this.currency === 'string') this.currency = sanitizeText(this.currency, { maxLength: 10 });
+
+  this.highlights = sanitizeStringArray(this.highlights, { maxLength: 200 });
+  this.includes = sanitizeStringArray(this.includes, { maxLength: 200 });
+  this.excludes = sanitizeStringArray(this.excludes, { maxLength: 200 });
+
+  next();
+});
 
 // Virtual: available seats
 packageSchema.virtual('availableSeats').get(function () {

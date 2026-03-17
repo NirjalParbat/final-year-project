@@ -17,6 +17,10 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Can only review confirmed bookings' });
     }
 
+    if (booking.package.toString() !== packageId.toString()) {
+      return res.status(400).json({ success: false, message: 'Review package does not match booking package' });
+    }
+
     // Check if already reviewed
     const existing = await Review.findOne({ booking: bookingId });
     if (existing) {
@@ -34,7 +38,8 @@ export const createReview = async (req, res) => {
     await review.populate('user', 'name avatar');
     res.status(201).json({ success: true, message: 'Review submitted', review });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('createReview error:', error);
+    res.status(500).json({ success: false, message: 'Failed to submit review.' });
   }
 };
 
@@ -47,7 +52,8 @@ export const getPackageReviews = async (req, res) => {
       .sort('-createdAt');
     res.json({ success: true, reviews });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getPackageReviews error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch reviews.' });
   }
 };
 
@@ -60,7 +66,8 @@ export const deleteReview = async (req, res) => {
     await review.deleteOne();
     res.json({ success: true, message: 'Review deleted' });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('deleteReview error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete review.' });
   }
 };
 
@@ -74,6 +81,7 @@ export const getAllReviews = async (req, res) => {
       .sort('-createdAt');
     res.json({ success: true, reviews });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getAllReviews error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch reviews.' });
   }
 };

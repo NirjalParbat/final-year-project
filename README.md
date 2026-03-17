@@ -50,9 +50,7 @@ Access:
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8080/api
 
-## Default Admin Login
-- **Email**: admin@ghumfir.com
-- **Password**: admin123
+
 
 ## Project Structure
 ```

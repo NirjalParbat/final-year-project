@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.model.js';
 import generateToken from '../utils/generateToken.js';
 import { sendEmail } from '../utils/sendEmail.js';
+import { logAuditEvent } from '../utils/auditLogger.js';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -23,6 +24,7 @@ export const register = async (req, res) => {
 
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
+      logAuditEvent('auth.register.blocked_existing_email', { email: normalizedEmail, ip: req.ip }, 'warn');
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
@@ -44,6 +46,7 @@ export const register = async (req, res) => {
       success: true,
       message: 'Registration successful. Please check your email to verify your account before logging in.',
     });
+    logAuditEvent('auth.register.success', { userId: user._id, email: normalizedEmail, ip: req.ip });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ success: false, message: 'Registration failed. Please try again.' });
@@ -68,12 +71,14 @@ export const login = async (req, res) => {
     // prevent timing-based email enumeration attacks.
     if (!user) {
       await bcrypt.compare(password, '$2b$12$invalidhashfordummycomparetiming00000000000');
+      logAuditEvent('auth.login.failed_unknown_user', { email: normalizedEmail, ip: req.ip }, 'warn');
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
     // Check if account is currently locked
     if (user.lockUntil && user.lockUntil > Date.now()) {
       const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
+      logAuditEvent('auth.login.blocked_locked_account', { userId: user._id, email: normalizedEmail, ip: req.ip }, 'warn');
       return res.status(423).json({
         success: false,
         message: `Account is temporarily locked due to too many failed attempts. Try again in ${minutesLeft} minute(s).`,
@@ -99,11 +104,18 @@ export const login = async (req, res) => {
         attemptsLeft > 0
           ? `Invalid email or password. ${attemptsLeft} attempt(s) remaining before lockout.`
           : 'Account locked due to too many failed attempts. Try again in 2 hours.';
+      logAuditEvent('auth.login.failed_bad_password', {
+        userId: user._id,
+        email: normalizedEmail,
+        attempts: user.loginAttempts,
+        ip: req.ip,
+      }, 'warn');
       return res.status(401).json({ success: false, message });
     }
 
     // Enforce email verification
     if (!user.isEmailVerified) {
+      logAuditEvent('auth.login.blocked_unverified_email', { userId: user._id, email: normalizedEmail, ip: req.ip }, 'warn');
       return res.status(403).json({
         success: false,
         message: 'Email not verified. Please check your inbox and verify your account before logging in.',
@@ -112,6 +124,7 @@ export const login = async (req, res) => {
     }
 
     if (!user.isActive) {
+      logAuditEvent('auth.login.blocked_inactive_account', { userId: user._id, email: normalizedEmail, ip: req.ip }, 'warn');
       return res.status(403).json({ success: false, message: 'Account has been deactivated. Contact support.' });
     }
 
@@ -135,6 +148,7 @@ export const login = async (req, res) => {
         wishlist: user.wishlist || [],
       },
     });
+    logAuditEvent('auth.login.success', { userId: user._id, email: normalizedEmail, ip: req.ip });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Login failed. Please try again.' });

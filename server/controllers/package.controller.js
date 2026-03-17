@@ -10,6 +10,9 @@ export const getPackages = async (req, res) => {
       sort = '-createdAt', page = 1, limit = 9,
     } = req.query;
 
+    const allowedSorts = new Set(['-createdAt', 'createdAt', 'price', '-price', 'rating', '-rating', 'duration', '-duration']);
+    const safeSort = allowedSorts.has(sort) ? sort : '-createdAt';
+
     const query = { isActive: true };
 
     if (search) {
@@ -36,7 +39,7 @@ export const getPackages = async (req, res) => {
 
     const skip = (Number(page) - 1) * Number(limit);
     const total = await Package.countDocuments(query);
-    const packages = await Package.find(query).sort(sort).skip(skip).limit(Number(limit));
+    const packages = await Package.find(query).sort(safeSort).skip(skip).limit(Number(limit));
 
     res.json({
       success: true,
@@ -46,7 +49,8 @@ export const getPackages = async (req, res) => {
       packages,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getPackages error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch packages.' });
   }
 };
 
@@ -60,7 +64,8 @@ export const getPackageById = async (req, res) => {
     }
     res.json({ success: true, package: pkg });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getPackageById error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch package.' });
   }
 };
 
@@ -71,7 +76,8 @@ export const createPackage = async (req, res) => {
     const pkg = await Package.create(req.body);
     res.status(201).json({ success: true, message: 'Package created', package: pkg });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('createPackage error:', error);
+    res.status(400).json({ success: false, message: 'Failed to create package.' });
   }
 };
 
@@ -86,7 +92,8 @@ export const updatePackage = async (req, res) => {
     if (!pkg) return res.status(404).json({ success: false, message: 'Package not found' });
     res.json({ success: true, message: 'Package updated', package: pkg });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('updatePackage error:', error);
+    res.status(400).json({ success: false, message: 'Failed to update package.' });
   }
 };
 
@@ -98,7 +105,8 @@ export const deletePackage = async (req, res) => {
     if (!pkg) return res.status(404).json({ success: false, message: 'Package not found' });
     res.json({ success: true, message: 'Package deleted' });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('deletePackage error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete package.' });
   }
 };
 
@@ -108,6 +116,11 @@ export const toggleWishlist = async (req, res) => {
   try {
     const user = req.user;
     const packageId = req.params.id;
+
+    const pkg = await Package.findById(packageId).select('_id isActive');
+    if (!pkg || !pkg.isActive) {
+      return res.status(404).json({ success: false, message: 'Package not found' });
+    }
 
     const index = user.wishlist.findIndex((id) => id.toString() === packageId.toString());
     if (index > -1) {
@@ -123,7 +136,8 @@ export const toggleWishlist = async (req, res) => {
       wishlist: user.wishlist,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('toggleWishlist error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update wishlist.' });
   }
 };
 
@@ -134,6 +148,7 @@ export const getFeaturedPackages = async (req, res) => {
     const packages = await Package.find({ isActive: true, featured: true }).limit(6);
     res.json({ success: true, packages });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('getFeaturedPackages error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch featured packages.' });
   }
 };
